@@ -1,11 +1,36 @@
 from flask import Flask, request, jsonify, render_template_string
-from googletrans import Translator, LANGUAGES
+from translatepy import Translator
+from translatepy.exceptions import TranslatepyException
 
 app = Flask(__name__)
 translator = Translator()
 
+# Define supported languages
+LANGUAGES = {
+    "auto": "Auto-detect",
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "hi": "Hindi",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "bn": "Bengali",
+    "ml": "Malayalam",
+    "mr": "Marathi",
+    "gu": "Gujarati",
+    "kn": "Kannada",
+    "pa": "Punjabi",
+    "or": "Odia",
+    "as": "Assamese",
+    "bo": "Bhojpuri",
+    "ne": "Nepali",
+    "si": "Sinhala",
+    "bs": "Bosnian",
+}
+
 # Filtered languages for the target dropdown (removing auto-detect)
-TARGET_LANGUAGES = {k: v for k, v in LANGUAGES.items() if k != 'auto'}
+TARGET_LANGUAGES = {k: v for k, v in LANGUAGES.items() if k != "auto"}
 
 # HTML Template
 HTML_TEMPLATE = """
@@ -142,7 +167,7 @@ HTML_TEMPLATE = """
         </div>
     </div>
     <footer>
-        Powered by Google Translate API
+        Powered by TranslatePy API
     </footer>
 
     <script>
@@ -209,12 +234,17 @@ def translate_text():
         return jsonify({'translated_text': ''})
 
     try:
-        # Translate the text using googletrans
-        translation_result = translator.translate(source_text, src=source_lang, dest=target_lang)
-        translated_text = translation_result.text
+        # Translate the text using translatepy
+        if source_lang == "auto":
+            translation = translator.translate(source_text, target_lang)
+        else:
+            translation = translator.translate(source_text, target_lang, source_lang)
+
+        translated_text = translation.result
         return jsonify({'translated_text': translated_text})
-    except Exception as e:
+    except TranslatepyException as e:
         return jsonify({'error': f"Translation failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
+    
